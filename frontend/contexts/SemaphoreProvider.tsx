@@ -8,26 +8,18 @@ import {
   generateAuthenticationOptions,
   generateRegistrationOptions,
 } from "@simplewebauthn/server"
+import { WebAuthnIdentity } from "semaphore-webauthn"
 
 import { hash } from "@/lib/utils"
 
 function SemaphoreProvider({ children }: { children?: React.ReactNode }) {
-  const router = useRouter()
   const groupSize = 20 // 2**20 members
   const minAnonSet = 5
   const [groupId, setGroupId] = useState(1)
 
-  // Generate WebAuthn credential ID for Semaphore
-  const genPassword = async () => {
-    const options = generateAuthenticationOptions({})
-    const asseResp = await startAuthentication(options)
-    console.log("authentication resp", asseResp)
-    return asseResp.id
-  }
-
   // Signals currently authenticated user
   const handleSignal = async (question: string) => {
-    const identity = new Identity(await genPassword())
+    const { identity } = await WebAuthnIdentity.fromAuthenticate({})
 
     // fetch all members from the database
     const getMembers = await fetch(
@@ -94,24 +86,15 @@ function SemaphoreProvider({ children }: { children?: React.ReactNode }) {
 
   const handleRegister = async (username: string, iykRef: string) => {
     // gets registration options from server
-    const optionsResp = await generateRegistrationOptions({
+    const {
+      identity: { commitment },
+    } = await WebAuthnIdentity.fromRegister({
       rpName: "heyauthn",
       rpID: window.location.hostname,
       userID: await hash(username),
       userName: username,
       attestationType: "none",
     })
-
-    // generates a key pair + credential ID from the authenticator
-    let attResp
-    try {
-      attResp = await startRegistration(optionsResp)
-    } catch (e) {
-      console.log(e)
-      return
-    }
-    console.log("registration resp", attResp)
-    const { commitment } = new Identity(attResp.id)
 
     // post new user and semaphore public key to server
     const isValid = await fetch("/api/register", {
