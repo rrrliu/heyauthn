@@ -1,6 +1,7 @@
 import { createContext, useContext, useState } from "react"
 import { useRouter } from "next/router"
 import { Group } from "@semaphore-protocol/group"
+import { WebAuthnIdentity } from "@semaphore-protocol/heyauthn"
 import { Identity } from "@semaphore-protocol/identity"
 import { generateProof } from "@semaphore-protocol/proof"
 import { startAuthentication, startRegistration } from "@simplewebauthn/browser"
@@ -8,7 +9,6 @@ import {
   generateAuthenticationOptions,
   generateRegistrationOptions,
 } from "@simplewebauthn/server"
-import { WebAuthnIdentity } from "@semaphore-protocol/heyauthn"
 
 import { hash } from "@/lib/utils"
 
@@ -33,12 +33,11 @@ function SemaphoreProvider({ children }: { children?: React.ReactNode }) {
     )
     const res = await getMembers.json()
     const members = res.body
-    console.log("List of members", members)
 
     // create group
     const group = new Group(groupId, groupSize)
     if (members.length < minAnonSet) {
-      console.log("Cannot signal yet")
+      console.error("Cannot signal yet")
       return false
     } else {
       const bigIntMembers = members.map((e) => {
@@ -60,7 +59,6 @@ function SemaphoreProvider({ children }: { children?: React.ReactNode }) {
       }
     )
 
-    console.log("identity", identity)
     const questionData = {
       semaphorePublicKey: identity.commitment.toString(),
       proof: fullProof,
