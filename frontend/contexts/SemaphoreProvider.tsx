@@ -8,7 +8,7 @@ import {
   generateAuthenticationOptions,
   generateRegistrationOptions,
 } from "@simplewebauthn/server"
-import { WebAuthnIdentity } from "semaphore-webauthn"
+import { WebAuthnIdentity } from "@semaphore-protocol/heyauthn"
 
 import { hash } from "@/lib/utils"
 
